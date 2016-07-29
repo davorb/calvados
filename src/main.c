@@ -19,6 +19,26 @@
 
 #define LIGHT_SENSOR_PATH "/sys/devices/platform/applesmc.768/light"
 #define BACKLIGHT_PATH "/sys/class/backlight/intel_backlight/brightness"
+#define MAX_BRIGHTNESS 1808
+#define MIN_BRIGHTNESS 255
+#define MAX_LIGHT_SENSOR_LEVEL 255.0f
+
+int desired_backlight_val(int sensor_val)
+{
+	float sensor_percentage = sensor_val / MAX_LIGHT_SENSOR_LEVEL;
+	printf("sensor val: %i, percentage: %f\n", sensor_val,
+		   sensor_percentage);
+	int val = (int)(MAX_BRIGHTNESS * sensor_percentage);
+	if (val < MIN_BRIGHTNESS) {
+		val = MIN_BRIGHTNESS;
+	}
+	return val;
+}
+
+int max_brightness()
+{
+	return MAX_BRIGHTNESS;
+}
 
 void sensor_err_msg()
 {
@@ -59,6 +79,9 @@ void set_backlight(int level)
 int main()
 {
 	printf("current light sensor level: %i\n", sensor_value());
-	set_backlight(1800);
+	int light_level = sensor_value();
+	int new_brightness = desired_backlight_val(light_level);
+	printf("setting brightness to: %i\n", new_brightness);
+	set_backlight(new_brightness);
 	return 0;
 }
