@@ -5,29 +5,29 @@
 
 void sensor_err_msg()
 {
-		fprintf(stderr, "Failed to read the light sensor value.\n");
-		exit(1);
+	fprintf(stderr, "Failed to read the light sensor value.\n");
+	exit(1);
 }
 
 int sensor_value()
 {
-		FILE *fp;
-		if ((fp = fopen(LIGHT_SENSOR_PATH, "r")) == NULL) {
-				sensor_err_msg();
-		}
+	FILE *fp;
+	if ((fp = fopen(LIGHT_SENSOR_PATH, "r")) == NULL) {
+		sensor_err_msg();
+	}
 
-		char line[16];
-		fgets(line, 16, fp);
-		if (line == NULL) {
-				sensor_err_msg();
-		}
-		int result = atoi(line+1);
-		fclose(fp);
-		return result;
+	char line[16];
+	fgets(line, 16, fp);
+	if (line == NULL) {
+		sensor_err_msg();
+	}
+	int result = atoi(line+1);
+	fclose(fp);
+	return result;
 }
 
 int main()
 {
-		printf("current light sensor level: %i\n", sensor_value());
-		return 0;
+	printf("current light sensor level: %i\n", sensor_value());
+	return 0;
 }
