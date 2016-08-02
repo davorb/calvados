@@ -98,7 +98,8 @@ void check_and_set_brightness()
 	set_backlight(new_brightness);
 }
 
-void launch_daemon() {
+void launch_daemon()
+{
 	pid_t pid;
 	pid = fork();
 
