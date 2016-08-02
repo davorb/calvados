@@ -1,0 +1,28 @@
+#+TITLE: Calvados
+#+AUTHOR: Davor Babić
+#+EMAIL: davor@davor.se
+
+Calvados is a daemon for automatically adjusting the display
+brightness on a laptop. It is similar to [[https://github.com/Janhouse/lighter][Lighter]] and [[https://github.com/poliva/lightum][Lightum]], with the
+difference that it uses no external dependencies and requires less
+resources to run.
+
+* Harware Support
+  The current version is written explicitly for a MacBook Pro
+  (late 2011) model, running Arch Linux. Adding support for other
+  hardware is considered trivial.
+
+* Compiling from source
+#+BEGIN_SRC sh
+  ./configure
+  make
+#+END_SRC
+
+* Starting the daemon
+  The program will require explicit permission to change the display
+  brightness levels, and read the ambient brightness sensor. The
+  easiest way to accomplish this is by running it as root.
+
+  #+BEGIN_SRC sh
+    sudo ./src/calvados
+  #+END_SRC
