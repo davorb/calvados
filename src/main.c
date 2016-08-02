@@ -16,18 +16,28 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <syslog.h>
+#include <unistd.h>
+#include <sys/types.h>
 
 #define LIGHT_SENSOR_PATH "/sys/devices/platform/applesmc.768/light"
 #define BACKLIGHT_PATH "/sys/class/backlight/intel_backlight/brightness"
 #define MAX_BRIGHTNESS 1808
-#define MIN_BRIGHTNESS 355
+#define MIN_BRIGHTNESS 155
 #define MAX_LIGHT_SENSOR_LEVEL 255.0f
+#define SLEEP_TIME 15
 
 int desired_backlight_val(int sensor_val)
 {
-	float sensor_percentage = (float)sensor_val / MAX_LIGHT_SENSOR_LEVEL * 1.3f;
-	printf("sensor val: %i, percentage: %f\n", sensor_val,
+	float sensor_percentage = (float)sensor_val / MAX_LIGHT_SENSOR_LEVEL * 2.3f;
+
+#ifdef DEBUG
+	syslog(LOG_DEBUG,
+		   "sensor val: %i, percentage: %f\n",
+		   sensor_val,
 		   sensor_percentage);
+#endif
+
 	int val = (int)(MAX_BRIGHTNESS * sensor_percentage);
 	if (val < MIN_BRIGHTNESS) {
 		val = MIN_BRIGHTNESS;
@@ -42,8 +52,8 @@ int max_brightness()
 
 void sensor_err_msg()
 {
-	fprintf(stderr, "Failed to read the light sensor value.\n");
-	exit(1);
+	syslog(LOG_ERR, "Failed to read the light sensor value.\n");
+	exit(EXIT_FAILURE);
 }
 
 int sensor_value()
@@ -67,8 +77,8 @@ void set_backlight(int level)
 {
 	FILE *fp;
 	if ((fp = fopen(BACKLIGHT_PATH, "w")) == NULL) {
-		fprintf(stderr, "Unable to find backlight ACPI.\n");
-		exit(1);
+		syslog(LOG_ERR, "Unable to find backlight ACPI.\n");
+		exit(EXIT_FAILURE);
 	}
 
 	fprintf(fp, "%i", level);
@@ -76,12 +86,43 @@ void set_backlight(int level)
 	fclose(fp);
 }
 
-int main()
+void check_and_set_brightness()
 {
-	printf("current light sensor level: %i\n", sensor_value());
 	int light_level = sensor_value();
 	int new_brightness = desired_backlight_val(light_level);
-	printf("setting brightness to: %i\n", new_brightness);
+#ifdef DEBUG
+	syslog(LOG_DEBUG, "current light sensor level: %i\n", sensor_value());
+	syslog(LOG_DEBUG, "setting brightness to: %i\n", new_brightness);
+#endif
+
 	set_backlight(new_brightness);
-	return 0;
+}
+
+void launch_daemon() {
+	pid_t pid;
+	pid = fork();
+
+	if (pid < 0) {				/* fork error */
+		exit(EXIT_FAILURE);
+	} else if (pid > 0) {		/* parent exits */
+		exit(EXIT_SUCCESS);
+	}
+
+	if (setsid() < 0) {			/* child process becomes session leader */
+		exit(EXIT_FAILURE);
+	}
+
+	openlog(NULL, LOG_CONS, LOG_USER);
+
+	for (;;) {
+		check_and_set_brightness();
+		sleep(SLEEP_TIME);
+	}
+	closelog();
+}
+
+int main()
+{
+	launch_daemon();
+	return EXIT_SUCCESS;
 }
